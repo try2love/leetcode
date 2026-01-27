@@ -1,5 +1,5 @@
 # leetcode
-leetcode刷题复建，当前阶段主攻python
+leetcode刷题复健，当前阶段主攻python
 
 
 

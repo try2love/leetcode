@@ -1827,3 +1827,254 @@ asyncio.Queue：协程安全，适合异步程序，不可用于普通同步代�
 
 Python 中的队列不是单一类型，而是一组围绕 FIFO 抽象构建的数据结构与工具。deque 是最通用、最推荐的同步队列实现；queue.Queue 是并发场景下的安全选择；asyncio.Queue 服务于异步编程模型。理解队列的操作边界与适用场景，能够帮助你在算法设计与工程实践中做出更合理的数据结构选择，从而写出更清晰、更高效的代码。
 
+## 2026-02-04
+
+### python中自带的二分查找
+
+#### **1. 它们是什么：在“已排序序列”里做二分插入定位**
+
+bisect_left / bisect_right 都来自 Python 标准库 bisect，用于在**保持序列有序**的前提下，给定目标值 x，返回它在有序序列 a 中应插入的位置 i（索引），使得插入后仍然有序；它们的区别只在于：遇到“相等元素”时插到**左边**还是**右边**。重要前提：a 必须按升序排列（除非你自己实现降序逻辑），否则结果不可靠。
+
+- bisect_left(a, x, lo=0, hi=len(a))：返回最左插入点 i，满足：a[:i] 中所有元素都 < x，a[i:] 中所有元素都 >= x；等价不等式（在区间 [lo, hi) 上）：a[i-1] < x <= a[i]（边界处按存在性理解）。
+
+- bisect_right(a, x, lo=0, hi=len(a))（别名 bisect(a, x, ...)）：返回最右插入点 i，满足：a[:i] 中所有元素都 <= x，a[i:] 中所有元素都 > x；等价不等式：a[i-1] <= x < a[i]。
+
+  这两个函数都只返回“位置”，不负责插入；若要插入，用 insort_left/insort_right（内部也是二分定位 + list.insert）。
+
+#### **2. 最核心的差异：相等元素的“稳定边界”**
+
+设有序数组 a，目标 x，记 L = bisect_left(a, x)，R = bisect_right(a, x)，那么：a[L:R] 恰好是所有等于 x 的元素（可能为空）；因此 R - L 就是 x 出现次数。
+
+用一个例子直观感受：
+
+```python
+from bisect import bisect_left, bisect_right
+a = [1, 2, 2, 2, 4, 7]
+print(bisect_left(a, 2))   # 1
+print(bisect_right(a, 2))  # 4
+# a[1:4] == [2,2,2]
+```
+
+再看“插入后顺序”：
+
+```python
+from bisect import bisect_left, bisect_right
+a = [1,2,2,2,4]
+x = 2
+i1 = bisect_left(a, x)
+i2 = bisect_right(a, x)
+print(i1, i2)  # 1 4
+# 若插到 i1：新2会排在所有2之前
+# 若插到 i2：新2会排在所有2之后
+```
+
+#### **3. 形式化条件与区间语义（非常重要，避免 off-by-one）**
+
+它们都支持 lo 与 hi，表示只在半开区间 [lo, hi) 上做二分；返回值 i 也必然在 [lo, hi]（注意右端是 hi 而不是 hi-1，因为“插入点”可能在末尾）。形式化地：
+
+- i = bisect_left(a, x, lo, hi) 满足：对所有 j in [lo, i)，有 a[j] < x；对所有 j in [i, hi)，有 a[j] >= x。
+
+- i = bisect_right(a, x, lo, hi) 满足：对所有 j in [lo, i)，有 a[j] <= x；对所有 j in [i, hi)，有 a[j] > x。
+
+  边界情况：若 x 小于区间内最小值，两个函数都返回 lo；若 x 大于区间内最大值，两个函数都返回 hi；若区间为空（lo == hi），返回 lo。
+
+#### **4. 时间复杂度与适用数据结构**
+
+- 定位（bisect_left/right）是二分：比较次数 O(log n)；对 Python list 来说随机访问是 O(1)，所以定位很快。
+- 但若你随后真的插入到 list（list.insert 或 insort_*），需要移动元素，整体插入成本是 O(n)；所以 bisect 适合“**只查询位置**”或“**查询频繁、插入不频繁**”的场景；若要大量动态插入并维持有序，通常考虑 bisect + array/deque（仍要搬移）、或第三方结构（如 sortedcontainers）等。
+
+#### **5. 常用技巧与典型用法（带可直接复用的模板）**
+
+**5.1 找“是否存在”与“第一次出现的位置”**：已排序 a，判断 x 是否存在：先求 i = bisect_left(a, x)，再检查 i < len(a) and a[i] == x。
+
+```python
+from bisect import bisect_left
+def contains(a, x):
+    i = bisect_left(a, x)
+    return i < len(a) and a[i] == x
+```
+
+**5.2 统计出现次数**：count = bisect_right(a, x) - bisect_left(a, x)。
+
+```python
+from bisect import bisect_left, bisect_right
+def count_x(a, x):
+    return bisect_right(a, x) - bisect_left(a, x)
+```
+
+**5.3 获取等值区间 [L, R)**：直接得到所有 x 的切片范围。
+
+```python
+from bisect import bisect_left, bisect_right
+def equal_range(a, x):
+    L = bisect_left(a, x)
+    R = bisect_right(a, x)
+    return L, R  # a[L:R] 全是 x
+```
+
+**5.4 lower_bound / upper_bound（算法竞赛同款）**：C++ 里的 lower_bound≈bisect_left，upper_bound≈bisect_right；很多“找第一个 >=x”或“第一个 >x”的问题直接套用。
+
+**5.5 找“最后一个 <= x”的索引**：这类题常见，但注意边界；做法是 i = bisect_right(a, x) - 1，再判断 i >= 0。
+
+```python
+from bisect import bisect_right
+def last_leq(a, x):
+    i = bisect_right(a, x) - 1
+    return i if i >= 0 else None
+```
+
+**5.6 找“第一个 >= x”的索引**：就是 bisect_left(a, x)；找“第一个 > x”就是 bisect_right(a, x)。
+
+**5.7 用于阈值分桶（bucket）/区间映射**：给定有序分割点 cuts（如分数线、时间段边界），要把值 v 放入哪个桶，常用 bisect_right：返回的索引就是桶编号（取决于你如何定义区间闭开）。
+
+```python
+from bisect import bisect_right
+cuts = [60, 70, 80, 90]  # 分割点
+def grade_bucket(score):
+    # 约定：( -inf,60], (60,70], (70,80], (80,90], (90,inf)
+    return bisect_right(cuts, score)
+```
+
+如果你想要区间形如 [cut_i, cut_{i+1})（左闭右开），一般用 bisect_left 更自然；关键是你要明确“边界包含谁”，再选 left/right。
+
+#### **6. insort_left / insort_right：真正插入（但插入是 O(n)）**
+
+```
+from bisect import insort_left, insort_right
+a = [1,2,2,4]
+insort_left(a, 2)   # 插到所有2之前
+# a == [1,2,2,2,4]
+insort_right(a, 2)  # 插到所有2之后
+# a == [1,2,2,2,2,4]
+```
+
+内部逻辑就是：i = bisect_left/right(...) 然后 a.insert(i, x)；所以定位快，但搬移慢。
+
+#### **7. “自定义 key”怎么办：bisect 本身不带 key，常见替代方案**
+
+标准库 bisectht 不接受 key= 参数；如果你要在“按某个字段排序”的对象列表上二分，有两种主流做法：**(A) 用平行 key 数组二分** 或 **(B) 用元组让 Python 比较**。
+
+**7.1 平行 key 数组（最清晰）**：维护 keys = [obj.k for obj in objs] 与 objs 同步；二分在 keys 上定位，再对 objs 做同位置操作。
+
+```python
+from bisect import bisect_left
+objs = [{"k": 10}, {"k": 20}, {"k": 20}, {"k": 35}]
+keys = [o["k"] for o in objs]
+x = 20
+i = bisect_left(keys, x)  # 1
+```
+
+**7.2 用元组比较（常用于“稳定左/右边界”）**：若对象可映射为 (key, tie_breaker)，可把列表存为元组序列并保持排序，然后 bisect 直接对元组做字典序比较；比如要找 key==20 的区间：左边界用 (20, -inf)，右边界用 (20, +inf)（实际用能覆盖范围的哨兵值）。
+
+```python
+from bisect import bisect_left, bisect_right
+pairs = [(10,"a"), (20,"b"), (20,"c"), (35,"d")]  # 按 (key, second) 排序
+L = bisect_left(pairs, (20, ""))      # "" 作为很小的 second（取决于数据域）
+R = bisect_right(pairs, (20, chr(0x10FFFF)))  # 作为很大的 second
+```
+
+注意：哨兵要与第二维类型可比且能保证上下界；如果第二维不是字符串而是数字，就用极小/极大数。
+
+#### **8. 亲手实现一版：用不变量理解 bisect（理解它为什么对）**
+
+理解 bisect 的关键是“维护不变量（invariant）”：在循环过程中保持一个区间 [lo, hi)，保证插入点一定在其中；每次取 mid 缩小区间直到 lo == hi。bisect_left 选择条件 a[mid] < x 决定往右，否则往左；bisect_right 选择条件 a[mid] <= x 决定往右，否则往左；这正是“相等时偏左/偏右”的根源。
+
+```python
+def my_bisect_left(a, x, lo=0, hi=None):
+    if hi is None: hi = len(a)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid] < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+def my_bisect_right(a, x, lo=0, hi=None):
+    if hi is None: hi = len(a)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid] <= x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+```
+
+你可以看到它们只差一个符号：< vs <=；也正因为这个符号，left 会把等于 x 的元素归入右侧（从而插到最左），right 会把等于 x 的元素归入左侧（从而插到最右）。
+
+#### **9. 易错点清单（高频坑位）**
+
+- 没排序就 bisect：结果可能“看似合理但不对”，属于隐蔽 bug；必须保证升序排序一致。
+- hi 是“右开”而不是包含端点：hi=len(a) 表示可以插在末尾；很多 off-by-one 都出在这里。
+- 想找“最后一个 <=x”却用了 bisect_left：正确是 bisect_right(a,x)-1，并处理空结果（返回 -1 时要小心）。
+- 对对象列表二分时忘了 key：bisect 不会帮你按字段比较；需要平行 key 或元组技巧。
+- 浮点数比较边界：如果数据来自计算误差，== 或边界插入可能表现不符合直觉；必要时先做容差处理或用 decimal。
+
+bisect_left 和 bisect_right 位于 Python 标准库 bisect 模块中，用于在**已排序序列**中通过**二分查找**快速定位某个元素的插入位置。它们不负责排序，也不直接修改原序列，而是回答一个问题：如果把元素 x 插入到当前有序序列中，插在什么位置才能保持序列仍然有序。其核心价值在于将查找复杂度从线性扫描的 O(n) 降低为 O(log n)，这是在有序数据上进行区间统计、边界定位、频率计算的基础工具。
+
+#### **二、bisect_left 与 bisect_right 的形式化定义**
+
+设有一个升序排列的序列 a，长度为 n，要查找元素 x。
+
+bisect_left(a, x) 返回最小的索引 i，使得对所有 j < i 有 a[j] < x，并且对所有 j ≥ i 有 a[j] ≥ x，即**第一个大于等于 x 的位置**。
+
+bisect_right(a, x) 返回最小的索引 i，使得对所有 j < i 有 a[j] ≤ x，并且对所有 j ≥ i 有 a[j] > x，即**第一个严格大于 x 的位置**。
+
+因此，当 x 在序列中存在重复元素时，left 指向重复区间的左边界，right 指向重复区间的右边界。
+
+#### **三、最直观的行为示例**
+
+假设有序列表 a = [1, 3, 3, 3, 5, 7]。
+
+对 x = 3：
+
+bisect_left(a, 3) 返回 1，对应第一个 3 的位置；
+
+bisect_right(a, 3) 返回 4，对应最后一个 3 的后一个位置。
+
+这两个结果共同刻画了值为 3 的元素在序列中的“闭区间 [1, 4)”范围。
+
+#### **四、核心操作语义（查、增的关系）**
+
+从抽象角度看，bisect 系列函数本质上只做“查”，即查找插入位置，而不直接“增”。如果你真的想插入元素，需要配合列表的插入操作：
+
+使用 a.insert(bisect_left(a, x), x) 可以把 x 插入到重复元素之前；
+
+使用 a.insert(bisect_right(a, x), x) 可以把 x 插入到重复元素之后。
+
+标准库中还提供了 insort_left 和 insort_right，它们是“查找 + 插入”的封装，但底层仍然依赖 bisect_left / bisect_right。
+
+#### **五、通过 bisect 进行“值区间统计”**
+
+bisect 的一个非常重要用途是**在有序数组中统计某个值或某个区间内的元素个数**。
+
+如果要统计值等于 x 的元素个数，可以计算
+
+count = bisect_right(a, x) − bisect_left(a, x)。
+
+如果要统计区间 [L, R] 内的元素个数，可以计算
+
+left = bisect_left(a, L)，right = bisect_right(a, R)，区间长度为 right − left。
+
+这类操作在频率分析、日志时间窗口统计、分桶统计中非常常见。
+
+#### **六、bisect 的 key 参数缺失与设计取舍**
+
+与 sorted 不同，bisect 并不支持 key 参数，这意味着它只能直接对“可比较的原始值”进行二分查找。如果你需要按对象的某个字段进行二分定位，通常的做法是先构造一个“投影数组”，例如把对象列表映射为一个字段值列表，再对该列表使用 bisect。这一设计体现了 bisect 的定位：它是一个底层、高性能、语义简单的工具，而不是高层抽象。
+
+#### **七、时间复杂度与性能边界**
+
+bisect_left 和 bisect_right 的查找时间复杂度为 O(log n)，这是它们的核心优势。但需要注意，如果你在列表上执行插入操作，list.insert 本身是 O(n) 的，因为需要移动后续元素。因此，bisect 非常适合“查边界、算数量”，但不适合在大规模列表上频繁插入。如果你的场景是大量插入并保持有序，通常需要考虑其他数据结构（如平衡树、堆或第三方库）。
+
+#### **八、常见误区与注意事项**
+
+第一，bisect 只对**已排序序列**有意义，如果序列无序，返回值在语义上是错误的，但程序不会报错。第二，bisect 只保证返回一个合法的插入位置，不保证该位置上的元素等于目标值。第三，bisect_left 与 bisect_right 的差异只在“等于 x 的处理方式”，这一点在处理重复元素时至关重要。第四，bisect 操作本身不会修改原序列，任何修改行为都需要显式调用 insert 或 insort
+
+#### **九、与线性搜索的对比理解**
+
+如果你在一个有序数组中，用 for 循环查找第一个 ≥ x 的位置，时间复杂度是 O(n)；使用 bisect_left，则是 O(log n)。当数据规模增大时，这种差异会非常明显。因此，**一旦数据是有序的，边界查找应优先考虑 bisect，而不是手写线性扫描**。
+
+#### **十、总结**
+
+bisect_left 和 bisect_right 是 Python 中用于有序序列的基础级工具，它们通过二分查找精确刻画元素的插入边界。left 定位“第一个不小于 x 的位置”，right 定位“第一个大于 x 的位置”，二者共同定义了重复元素的区间范围。它们广泛用于频率统计、区间查询、阈值分割等场景，是理解和利用“有序数据结构”的关键工具之一。

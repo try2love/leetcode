@@ -2309,3 +2309,155 @@ print(records)
 
 这里展示了三点：外层长度不一致用 zip_longest 保留全部；元素类型不一致完全没问题；内层维度不一致 zip 不关心，但你可以在后处理里记录 len(e) 或做 padding。
 
+## 2026-02-06
+
+### sort函数
+
+#### 一、sort的定位与基本特性
+
+sort 是 **list 的原地排序方法**，调用形式为 list.sort(...)，它会直接修改原列表顺序并返回 None。它与 sorted() 的核心区别在于：sort 原地修改、仅适用于 list；sorted 返回新列表、适用于任意可迭代对象。二者底层算法相同，均为 **稳定排序 TimSort**，时间复杂度平均与最坏情况为 `O(nlog n)`，在部分有序数据上接近 O(n)。
+
+#### **二、函数签名与参数含义**
+
+```python
+list.sort(*, key=None, reverse=False)
+```
+
+key：排序键函数，指定“按什么比较”；默认 None 表示直接比较元素本身。
+
+reverse：是否反转排序结果；False 为升序，True 为降序。
+
+重要性质：稳定性（相等键值的元素保持原相对顺序）、原地修改（不返回新列表）。
+
+#### **三、比较规则与可比性约束**
+
+当 key=None 时，元素本身必须两两可比较；当提供 key 时，比较的是 key(x) 的返回值，因此 **所有 key 返回值必须可相互比较**。Python3 不允许比较不相关类型（如 int 与 str），否则抛出 TypeError。工程修复套路：统一 key 返回类型；或返回结构化元组，在第一维放置可比较的“类型/缺失标记”。
+
+#### **四、核心参数** key的用法与模式
+
+key 接收一元函数，对每个元素计算一次排序键并缓存，再按键排序。
+
+按字符串长度排序：
+
+```py
+words = ["apple", "a", "banana", "cat"]
+words.sort(key=len)
+```
+
+忽略大小写排序：
+
+```python
+names = ["bob", "Alice", "carol"]
+names.sort(key=str.lower)
+```
+
+按字典字段排序：
+
+```python
+rows = [{"id":3,"score":9},{"id":1,"score":2},{"id":2,"score":5}]
+rows.sort(key=lambda r: r["score"])
+```
+
+按对象属性排序（更可读）：
+
+```python
+from operator import attrgetter
+rows.sort(key=attrgetter("score"))
+```
+
+多关键字排序（key 返回元组，按从左到右逐字段比较）：
+
+```python
+pairs = [(1,5),(0,7),(1,2)]
+pairs.sort(key=lambda x: (x[0], x[1]))
+```
+
+#### **五、**reverse **的语义与“局部降序”的实现**
+
+整体降序：
+
+```py
+a = [3,1,2]
+a.sort(reverse=True)
+```
+
+配合 key 的整体降序：
+
+```python
+pairs.sort(key=lambda x: x[1], reverse=True)
+```
+
+字段 A 升序、字段 B 降序（B 为数值）：
+
+```python
+pairs.sort(key=lambda x: (x[0], -x[1]))
+```
+
+若字段不可取负（如字符串），可用“稳定排序链式法”（见下一节）或排名映射。
+
+#### **六、稳定排序的利用：链式多字段排序**
+
+稳定性允许“先次要、后主要”的多次排序：
+
+```python
+rows.sort(key=lambda r: r["name"])          # 次要键
+rows.sort(key=lambda r: r["score"], reverse=True)  # 主要键（降序）
+```
+
+最终效果：以 score 为主序（降序），同分时按 name 升序。
+
+#### **七、按“数组某一维度”排序（二维/记录结构）**
+
+二维列表按第 k 列升序/降序：
+
+```py
+rows = [[3,9],[1,2],[2,5]]
+rows.sort(key=lambda r: r[0])               # 第0列升序
+rows.sort(key=lambda r: r[0], reverse=True) # 第0列降序
+```
+
+多维混合方向：
+
+```python
+rows.sort(key=lambda r: (r[0], -r[1]))       # 第0列升序，第1列降序（数值）
+```
+
+字典数组按字段（含缺失处理，缺失放后）：
+
+```python
+rows.sort(key=lambda r: (r.get("score") is None, r.get("score", 0)))
+```
+
+#### **八、常见实用技巧**
+
+排序索引而不移动原数组：
+
+```python
+a = [50,10,20]
+idx = list(range(len(a)))
+idx.sort(key=lambda i: a[i])
+```
+
+按绝对值排序（稳定性保留同绝对值的原顺序）：
+
+```python
+a = [-3,1,-2,5]
+a.sort(key=abs)
+```
+
+自定义优先级排序（业务规则映射）：
+
+```python
+rank = {"high":0,"mid":1,"low":2}
+items = ["mid","low","high","mid"]
+items.sort(key=lambda x: rank.get(x, 999))
+```
+
+#### **九、常见误用与注意事项**
+
+list.sort() 返回 None，不要写 a = a.sort()；混合不可比较类型会报错；key 返回值必须统一可比；若只需 Top-K 且数据很大，避免全量 sort（可考虑更合适的算法工具）。
+
+#### **十、总结**
+
+sort 的本质是“**稳定、原地、以 key 为核心的排序**”。掌握三点即可覆盖绝大多数需求：1）用 key 明确排序依据；2）用 reverse 或 key 变换控制方向；3）用稳定性实现多字段与混合方向排序。
+

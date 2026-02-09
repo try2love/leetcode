@@ -2461,3 +2461,33 @@ list.sort() 返回 None，不要写 a = a.sort()；混合不可比较类型会�
 
 sort 的本质是“**稳定、原地、以 key 为核心的排序**”。掌握三点即可覆盖绝大多数需求：1）用 key 明确排序依据；2）用 reverse 或 key 变换控制方向；3）用稳定性实现多字段与混合方向排序。
 
+## 2025-02-09
+
+### 单链表查找中间节点、原地逆置
+
+对于单链表，找二等分节点的方式是维护快慢指针，快指针的速度是慢指针的一倍
+
+```python
+class Solution:
+    def middleNode(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        slow = fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        return slow
+```
+
+原地逆置，通常采用头插法，断开当前链接，插入到新链表的头部
+
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        pre, cur = None, head
+        while cur:
+            nxt = cur.next
+            cur.next = pre
+            pre = cur
+            cur = nxt
+        return pre
+```
+

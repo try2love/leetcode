@@ -2461,7 +2461,7 @@ list.sort() 返回 None，不要写 a = a.sort()；混合不可比较类型会�
 
 sort 的本质是“**稳定、原地、以 key 为核心的排序**”。掌握三点即可覆盖绝大多数需求：1）用 key 明确排序依据；2）用 reverse 或 key 变换控制方向；3）用稳定性实现多字段与混合方向排序。
 
-## 2025-02-09
+## 2026-02-09
 
 ### 单链表查找中间节点、原地逆置
 
@@ -2490,4 +2490,299 @@ class Solution:
             cur = nxt
         return pre
 ```
+
+## 2026-02-22
+
+### Python中的any函数
+
+ 我来详细介绍 Python 中的 `any()` 函数，这是面试和实际开发中都非常实用的内置函数。
+
+---
+
+#### 一、基本定义
+
+```python
+any(iterable)
+```
+
+**功能**：判断可迭代对象中**是否存在至少一个为真的元素**，存在则返回 `True`，否则返回 `False`。
+
+**等价逻辑**：
+
+```python
+def any_manual(iterable):
+    for element in iterable:
+        if element:           # 如果元素为真
+            return True       # 立即返回，短路求值
+    return False              # 全部遍历完，无真值
+```
+
+---
+
+#### 二、真值判断规则
+
+`any()` 使用 Python 的真值测试，以下值为 **False**：
+
+| 类型   | 假值示例                        |
+| ------ | ------------------------------- |
+| 布尔   | `False`                         |
+| 数值   | `0`, `0.0`, `0j`                |
+| 空序列 | `''`, `[]`, `()`, `{}`, `set()` |
+| 空对象 | `None`                          |
+| 特殊   | `float('nan')`（某些版本）      |
+
+**其余所有值均为 `True`**。
+
+---
+
+#### 三、基础用法示例
+
+```python
+# 1. 基本列表
+any([False, False, True])   # True（找到 True）
+any([False, 0, '', None])   # False（全假）
+any([0, 1, 2])              # True（1 为真）
+
+# 2. 空可迭代对象
+any([])                     # False（重要！边界情况）
+
+# 3. 生成器表达式（内存高效）
+any(x > 0 for x in [-1, -2, 3, -4])  # True，找到 3 立即停止
+
+# 4. 字符串
+any('hello')                # True（非空字符串）
+any('')                     # False（空字符串）
+
+# 5. 字典（判断键）
+any({'a': 0, 'b': 0})       # True（键 'a', 'b' 为真）
+any({})                     # False（空字典）
+```
+
+---
+
+#### 四、核心特性：短路求值
+
+```python
+# 关键优化：找到第一个真值立即停止，不遍历剩余元素
+
+def expensive_func():
+    print("执行了！")
+    return True
+
+# 短路示例
+any([True, expensive_func()])  
+# 输出：无（True 后直接返回，expensive_func 不执行）
+
+any([False, expensive_func()])
+# 输出："执行了！" → True
+```
+
+**性能对比**：
+
+```python
+import time
+
+# 大数据场景：1亿个元素，但第一个就是 True
+data = [True] + [False] * 100_000_000
+
+# any()：立即返回，O(1)
+%timeit any(data)  # ~50 ns
+
+# 手动遍历：O(n)，慢 1亿倍
+def manual_any(lst):
+    for x in lst:
+        if x:
+            return True
+    return False
+%timeit manual_any(data)  # 理论上慢，但 Python 函数调用有开销
+
+# 实际对比：all() 找 False 同样短路
+all([False] + [True] * 100_000_000)  # 立即返回
+```
+
+---
+
+#### 五、实际应用场景
+
+##### 场景 1：权限检查
+
+```python
+# 检查用户是否有任一权限
+user_permissions = ['read', 'write', 'admin']
+required = ['admin', 'superuser']
+
+has_permission = any(p in user_permissions for p in required)
+# True（'admin' 匹配，立即停止）
+```
+
+##### 场景 2：数据验证
+
+```python
+# 检查列表是否有有效数据（非 None/空）
+records = [None, [], {}, "valid", 0]
+
+if any(records):
+    print("存在有效数据")  # 输出（"valid" 为真）
+else:
+    print("全部为空")
+```
+
+##### 场景 3：矩阵/二维数据检查
+
+```python
+# 检查是否有任何一行全零
+matrix = [
+    [0, 0, 0],
+    [0, 1, 0],
+    [0, 0, 0]
+]
+
+has_nonzero_row = any(any(row) for row in matrix)
+# 外层 any：遍历每行
+# 内层 any：检查该行是否有非零元素
+# True（第二行有 1）
+```
+
+##### 场景 4：文件内容检查
+
+```python
+# 检查文件是否有非空行
+with open('data.txt', 'r') as f:
+    has_content = any(line.strip() for line in f)
+    # 生成器逐行读取，内存友好，找到非空行立即停止
+```
+
+##### 场景 5：配合 map 使用
+
+```python
+# 检查是否有任何元素满足条件
+nums = [1, 3, 5, 8, 10]
+
+# 是否有偶数？
+has_even = any(x % 2 == 0 for x in nums)  # True（8, 10）
+
+# 是否有大于 100 的？
+has_large = any(x > 100 for x in nums)    # False
+```
+
+---
+
+#### 六、与 `all()` 的对比
+
+| 函数    | 逻辑          | 短路条件                | 空容器返回值 |
+| ------- | ------------- | ----------------------- | ------------ |
+| `any()` | 存在真 → True | 找到第一个 `True` 停止  | `False`      |
+| `all()` | 全为真 → True | 找到第一个 `False` 停止 | `True`       |
+
+```python
+# 对偶关系
+any([False, False, True])  # True
+all([True, True, False])   # False
+
+# 德摩根定律
+not any(x) == all(not x for x in iterable)
+not all(x) == any(not x for x in iterable)
+```
+
+---
+
+#### 七、常见陷阱
+
+##### 陷阱 1：与 `or` 运算符混淆
+
+```python
+# any() 是函数，参数是可迭代对象
+any([0, 1, 2])      # True
+
+# or 是运算符，短路返回第一个真值或最后一个值
+0 or 1 or 2         # 1（返回第一个真值，不是 True/False）
+
+# 错误用法
+any(0, 1, 2)        # TypeError！any() 只接受一个可迭代参数
+any([0 or 1 or 2])  # True，但逻辑不同
+```
+
+##### 陷阱 2：生成器只能消费一次
+
+```python
+gen = (x > 0 for x in [1, 2, 3])
+
+any(gen)   # True
+any(gen)   # False！生成器已耗尽，返回 False（不是 True）
+
+# 解决：重新创建或转为列表
+data = [x > 0 for x in [1, 2, 3]]  # 列表推导
+any(data)  # True
+any(data)  # True（可重复使用）
+```
+
+##### 陷阱 3：`any()` 与 `bool()` 的区别
+
+```python
+any([1, 2, 3])      # True（检查多个元素）
+bool([1, 2, 3])     # True（检查容器本身非空，非元素）
+
+any([])             # False（无真值元素）
+bool([])            # False（空容器）
+
+# 特殊：非空容器但全假元素
+any([0, False, '']) # False（元素全假）
+bool([0, False, ''])# True（容器非空）
+```
+
+---
+
+#### 八、性能优化技巧
+
+```python
+# 1. 优先用生成器表达式，避免创建中间列表
+# 差：创建完整列表
+any([x > 0 for x in huge_data])  # 内存爆炸
+
+# 好：惰性求值
+any(x > 0 for x in huge_data)    # 内存 O(1)
+
+# 2. 短路优化：高概率真值放前面
+# 好：大概率先找到，提前停止
+any([likely_true, unlikely_true, very_rare])
+
+# 3. 与 numpy 配合（向量化更快）
+import numpy as np
+arr = np.array([0, 0, 1, 0])
+np.any(arr)  # True，比 Python any() 快（C 实现）
+np.any(arr > 0)  # 布尔数组判断
+```
+
+---
+
+#### 九、面试核心问答
+
+##### Q: `any()` 和 `or` 的区别？
+
+> "`any()` 是可迭代对象的聚合函数，返回布尔值；`or` 是运算符，返回第一个真值对象本身或最后一个值。`any([a,b,c])` 等价 `bool(a or b or c)`，但 `any()` 更通用，支持任意长度可迭代对象。"
+
+##### Q: 空列表 `any([])` 为什么返回 `False`？
+
+> "这是数学上的'存在量词'定义：空集中不存在任何满足条件的元素，所以'存在真值'为假。与 `all([])` 返回 `True`（空真）形成对偶。"
+
+##### Q: 如何实现自定义对象的 `any()` 判断？
+
+```python
+class User:
+    def __init__(self, name, is_active):
+        self.name = name
+        self.is_active = is_active
+    
+    def __bool__(self):  # 定义真值
+        return self.is_active
+
+users = [User("A", False), User("B", True)]
+any(users)  # True（User("B") 为真）
+```
+
+---
+
+#### 十、一句话总结
+
+> **`any()` 是 Python 的"存在量词"，高效检查可迭代对象中是否有真值元素，支持短路求值，是数据验证、权限检查、流式处理的利器。**
 

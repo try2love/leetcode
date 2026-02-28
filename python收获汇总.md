@@ -2786,3 +2786,147 @@ any(users)  # True（User("B") 为真）
 
 > **`any()` 是 Python 的"存在量词"，高效检查可迭代对象中是否有真值元素，支持短路求值，是数据验证、权限检查、流式处理的利器。**
 
+## 2026-02-28
+
+### python中的heapq
+
+#### 一、`heapq` 模块概述
+
+`heapq` 是 Python 标准库中的一个模块，提供了一组用于**堆排序**和**优先队列**操作的函数。默认情况下，`heapq` 实现的是**最小堆（min-heap）**，即堆顶元素是当前最小的元素。堆是完全二叉树的一种实现，它的特性是：
+
+- **父节点的值**小于或等于其左右子节点的值（最小堆）。
+- 通过堆可以在 **O(log n)** 的时间复杂度内完成插入和删除操作。
+
+在 Python 中，堆通过**列表**实现，堆顶元素始终位于 `list[0]` 位置，插入和删除元素时会自动调整堆的结构。`heapq` 提供的主要函数包括：`heappush`, `heappop`, `heapify`, `heappushpop`, `heapreplace`, `nlargest`, `nsmallest` 等。
+
+#### 二、基本操作函数详解
+
+##### 1. `heapq.heappush(heap, item)`
+
+将元素 `item` 推入堆中，保持堆的性质不变。
+
+```python
+import heapq
+heap = [1, 3, 5]
+heapq.heappush(heap, 2)  # 插入 2
+print(heap)  # 输出：[1, 2, 5, 3]
+```
+
+堆的性质保证了：推入元素后，堆的顺序仍然有效，`heap[0]` 仍然是最小值。
+
+##### 2. `heapq.heappop(heap)`
+
+弹出并返回堆中的最小元素，并保持堆的性质不变。
+
+```python
+import heapq
+heap = [1, 2, 3]
+min_item = heapq.heappop(heap)
+print(min_item)  # 输出：1
+print(heap)  # 输出：[2, 3]
+```
+
+`heappop` 操作会将堆顶元素弹出，并将最后一个元素移动到堆顶，随后重新调整堆。
+
+##### 3. `heapq.heapify(x)`
+
+将列表 `x` 转换为堆。此操作原地进行，时间复杂度是 O(n)，适合在已有数据情况下构建堆。
+
+```python
+import heapq
+x = [4, 1, 7, 3, 8, 5]
+heapq.heapify(x)
+print(x)  # 输出：[1, 3, 5, 4, 8, 7]
+```
+
+`heapify` 会对列表进行原地调整，使其符合堆结构要求，`x[0]` 成为最小值。
+
+##### 4. `heapq.heappushpop(heap, item)`
+
+先将元素 `item` 推入堆中，然后再弹出并返回堆中的最小元素。该方法相比 `heappush()` 和 `heappop()` 的组合操作更高效，因为它只需要调整堆一次。
+
+```python
+import heapq
+heap = [1, 2, 3]
+result = heapq.heappushpop(heap, 4)
+print(result)  # 输出：1 (堆顶最小元素被弹出)
+print(heap)  # 输出：[2, 4, 3]
+```
+
+在该操作中，`4` 会先被加入堆，再从堆中弹出最小元素 `1`。
+
+##### 5. `heapq.heapreplace(heap, item)`
+
+先弹出堆顶元素，再将 `item` 插入堆中。与 `heappop()` 后再 `heappush()` 相比，`heapreplace()` 只进行一次堆调整，效率更高。
+
+```python
+import heapq
+heap = [1, 2, 3]
+result = heapq.heapreplace(heap, 4)
+print(result)  # 输出：1 (堆顶最小元素被弹出)
+print(heap)  # 输出：[2, 4, 3]
+```
+
+`heapreplace` 可以确保弹出的元素是最小的，同时插入的元素仍然保证堆的性质。
+
+#### 三、附加功能：`nlargest` 与 `nsmallest`
+
+这两个函数用于直接从数据中选出前 K 个最大或最小的元素，利用堆结构在 **O(n log k)** 的时间复杂度内高效完成。
+
+- `heapq.nlargest(n, iterable, key=None)`：返回可迭代对象中前 `n` 个最大元素，`key` 参数用于自定义排序规则。
+- `heapq.nsmallest(n, iterable, key=None)`：返回可迭代对象中前 `n` 个最小元素，`key` 参数用于自定义排序规则。
+
+```python
+import heapq
+data = [5, 1, 3, 8, 7, 2]
+print(heapq.nlargest(3, data))  # 输出：[8, 7, 5]
+print(heapq.nsmallest(3, data))  # 输出：[1, 2, 3]
+```
+
+如果没有 `key`，默认按元素的大小排序。`nlargest` 和 `nsmallest` 不改变原始数据。
+
+#### 四、`merge` 函数：多路归并
+
+`heapq.merge(*iterables)` 用于对多个已排序的可迭代对象进行归并排序，返回一个 **按升序排列的元素生成器**。它可以对多个有序序列合并成一个有序序列。
+
+```python
+import heapq
+list1 = [1, 5, 9]
+list2 = [2, 6, 10]
+list3 = [3, 7, 11]
+merged = list(heapq.merge(list1, list2, list3))
+print(merged)  # 输出：[1, 2, 3, 5, 6, 7, 9, 10, 11]
+```
+
+该操作不会修改原始序列，并且非常高效，适用于多路归并算法。
+
+#### 五、堆的实现与性能分析
+
+堆是基于完全二叉树实现的，因此：
+
+- 查找最小（或最大）元素：O(1)
+- 插入元素：O(log n)
+- 删除最小（或最大）元素：O(log n)
+- 构建堆：O(n)
+  由于堆是一个完全二叉树，其高度始终是 `log n`，因此堆操作的效率相对较高，适合用于任务调度、流式数据的 Top-K 查找、优先队列等场景。
+
+#### 六、堆的应用场景
+
+堆广泛应用于**优先队列**、**图算法**、**流式数据**、**Top-K 问题**等场景：
+
+- **优先队列**：在任务调度中，堆用来快速获取优先级最高（或最低）的任务。
+- **Dijkstra 算法**：最短路径算法中需要频繁获取当前距离最短的节点。
+- **Top-K 问题**：在海量数据流中维护前 K 大或前 K 小的元素。
+- **合并多个已排序的列表**：如归并排序的多路归并。
+
+#### 七、常见误区与注意事项
+
+1）堆结构并不是有序的，它只保证堆顶元素最小（或最大），并不保证其他元素的顺序，因此不要用堆来替代排序。
+2）`heapq` 操作原地修改堆，不会返回新列表，因此如果你需要保留原数据，建议先进行 `heapq.heapify` 构建堆，再进行操作。
+3）`heapq` 并没有提供直接的“更新”操作（如 `decrease-key` 或 `increase-key`），通常需要通过“删除 + 插入”来实现。
+4）`heapq.merge` 是一个生成器，使用时最好转换为列表或通过迭代器按需获取元素。
+
+#### 八、总结
+
+`heapq` 提供了一组高效的堆操作，主要用于维护优先队列、Top-K 查找和多路归并。它基于二叉堆实现，支持插入、删除、查找最小元素等基本操作，常用于任务调度、图算法、流式数据处理等场景。理解堆的性能特性与操作细节，可以帮助你在实际编程中高效地处理大量数据。
+

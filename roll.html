@@ -70,7 +70,6 @@
         { id: "3", title: "Longest Substring Without Repeating Characters", cn: "无重复字符的最长子串", diff: "Medium" },
         { id: "4", title: "Median of Two Sorted Arrays", cn: "寻找两个正序数组的中位数", diff: "Hard" },
         { id: "5", title: "Longest Palindromic Substring", cn: "最长回文子串", diff: "Medium" },
-        { id: "10", title: "Regular Expression Matching", cn: "正则表达式匹配", diff: "Hard" },
         { id: "11", title: "Container With Most Water", cn: "盛最多水的容器", diff: "Medium" },
         { id: "15", title: "3Sum", cn: "三数之和", diff: "Medium" },
         { id: "17", title: "Letter Combinations of a Phone Number", cn: "电话号码的字母组合", diff: "Medium" },
@@ -79,13 +78,17 @@
         { id: "21", title: "Merge Two Sorted Lists", cn: "合并两个有序链表", diff: "Easy" },
         { id: "22", title: "Generate Parentheses", cn: "括号生成", diff: "Medium" },
         { id: "23", title: "Merge k Sorted Lists", cn: "合并 K 个升序链表", diff: "Hard" },
+        { id: "24", title: "swap nodes in pairs", cn: "两辆交换链表中的节点", diff: "Medium" },
+        { id: "25", title: "reverse nodes in k group", cn: "K 个一组翻转链表", diff: "Hard" }, 
         { id: "31", title: "Next Permutation", cn: "下一个排列", diff: "Medium" },
         { id: "32", title: "Longest Valid Parentheses", cn: "最长有效括号", diff: "Hard" },
         { id: "33", title: "Search in Rotated Sorted Array", cn: "搜索旋转排序数组", diff: "Medium" },
         { id: "34", title: "Find First and Last Position of Element in Sorted Array", cn: "在排序数组中查找元素的第一个和最后一个位置", diff: "Medium" },
         { id: "35", title: "Search Insert Position", cn: "搜索插入位置", diff: "Easy" },
         { id: "39", title: "Combination Sum", cn: "组合总和", diff: "Medium" },
+        { id: "41", title: "First Missing Positive", cn: "缺失的第一个正数", diff: "Hard" },
         { id: "42", title: "Trapping Rain Water", cn: "接雨水", diff: "Hard" },
+        { id: "45", title: "jump game ii", cn: "跳跃游戏II", diff: "Medium" },
         { id: "46", title: "Permutations", cn: "全排列", diff: "Medium" },
         { id: "48", title: "Rotate Image", cn: "旋转图像", diff: "Medium" },
         { id: "49", title: "Group Anagrams", cn: "字母异位词分组", diff: "Medium" },
@@ -106,7 +109,6 @@
         { id: "79", title: "Word Search", cn: "单词搜索", diff: "Medium" },
         { id: "84", title: "Largest Rectangle in Histogram", cn: "柱状图中最大的矩形", diff: "Hard" },
         { id: "94", title: "Binary Tree Inorder Traversal", cn: "二叉树的中序遍历", diff: "Easy" },
-        { id: "96", title: "Unique Binary Search Trees", cn: "不同的二叉搜索树", diff: "Medium" },
         { id: "98", title: "Validate Binary Search Tree", cn: "验证二叉搜索树", diff: "Medium" },
         { id: "101", title: "Symmetric Tree", cn: "对称二叉树", diff: "Easy" },
         { id: "102", title: "Binary Tree Level Order Traversal", cn: "二叉树的层序遍历", diff: "Medium" },
@@ -139,7 +141,6 @@
         { id: "207", title: "Course Schedule", cn: "课程表", diff: "Medium" },
         { id: "208", title: "Implement Trie (Prefix Tree)", cn: "实现 Trie (前缀树)", diff: "Medium" },
         { id: "215", title: "Kth Largest Element in an Array", cn: "数组中的第K个最大元素", diff: "Medium" },
-        { id: "221", title: "Maximal Square", cn: "最大正方形", diff: "Medium" },
         { id: "226", title: "Invert Binary Tree", cn: "翻转二叉树", diff: "Easy" },
         { id: "230", title: "Kth Smallest Element in a BST", cn: "二叉搜索树中第 K 小的元素", diff: "Medium" },
         { id: "234", title: "Palindrome Linked List", cn: "回文链表", diff: "Easy" },
@@ -153,7 +154,6 @@
         { id: "295", title: "Find Median from Data Stream", cn: "数据流的中位数", diff: "Hard" },
         { id: "300", title: "Longest Increasing Subsequence", cn: "最长递增子序列", diff: "Medium" },
         { id: "322", title: "Coin Change", cn: "零钱兑换", diff: "Medium" },
-        { id: "338", title: "Counting Bits", cn: "比特位计数", diff: "Easy" },
         { id: "347", title: "Top K Frequent Elements", cn: "前 K 个高频元素", diff: "Medium" },
         { id: "394", title: "Decode String", cn: "字符串解码", diff: "Medium" },
         { id: "416", title: "Partition Equal Subset Sum", cn: "分割等和子集", diff: "Medium" },
@@ -161,11 +161,11 @@
         { id: "438", title: "Find All Anagrams in a String", cn: "找到字符串中所有字母异位词", diff: "Medium" },
         { id: "543", title: "Diameter of Binary Tree", cn: "二叉树的直径", diff: "Easy" },
         { id: "560", title: "Subarray Sum Equals K", cn: "和为 K 的子数组", diff: "Medium" },
-        { id: "621", title: "Task Scheduler", cn: "任务调度器", diff: "Medium" },
         { id: "739", title: "Daily Temperatures", cn: "每日温度", diff: "Medium" },
         { id: "763", title: "Partition Labels", cn: "划分字母区间", diff: "Medium" },
-        { id: "994", title: "Rotting Oranges", cn: "腐烂的橘子", diff: "Medium" }
-    ];
+        { id: "994", title: "Rotting Oranges", cn: "腐烂的橘子", diff: "Medium" },
+        { id: "1143", title: "longest common subsequence", cn: "最长公共子序列", diff: "Medium" }
+];
     const canvas = document.getElementById('wheel');
     const ctx = canvas.getContext('2d');
     const totalItems = hot100.length; // 动态获取数组长度

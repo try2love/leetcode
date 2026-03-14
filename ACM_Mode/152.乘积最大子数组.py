@@ -29,8 +29,12 @@ class Solution:
             #     break
         return ans
 # @lc code=end
-import sys
-data = sys.stdin.readline().strip().split()
+# import sys
+# data = sys.stdin.readline().strip().split()
+data = input()
+print(data, type(data))
+data = data.strip().split()
+print(data, type(data))
 data = [int(x) for x in data]
 sol = Solution()
 ans = sol.maxProduct(data)

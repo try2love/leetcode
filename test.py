@@ -6,7 +6,9 @@ import sys
 # data = sys.stdin.read().strip().split() # 返回一维列表
 # data = sys.stdin.read().split() # 仍然返回一维列表，但是推荐strip
 # data = sys.stdin.readline()
-data = sys.stdin.readlines()
-data = [[x.strip().split(",", " ") for x in data]]
+# data = sys.stdin.readlines()
+# data = [[x.strip().split(",", " ") for x in data]]
+# splitlines是一行输入为一个str，最后汇聚为一个list，元素数量等于行数
+data = sys.stdin.read().strip().splitlines()
 
 print(data, type(data), len(data))

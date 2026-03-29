@@ -52,3 +52,44 @@ def print_tree(root: TreeNode):
     while result and result[-1] == "null":
         result.pop()
     print("[" + ",".join(result) + "]")
+
+"""
+把这个输入转为二维矩阵[[1,2,3],[4,5,6],[7,8,9]]
+1.json解析
+2.ast解析
+3.手动识别
+"""
+import json
+input_str = "[[1,2,3],[4,5,6],[7,8,9]]"
+matrix = json.loads(input_str)
+print(matrix)
+print(type(matrix))  # <class 'list'>
+print(matrix[0][1])  # 输出 2
+
+import ast
+input_str = "[[1,2,3],[4,5,6],[7,8,9]]"
+matrix = ast.literal_eval(input_str)
+print(matrix)
+
+data = input()
+grid = []
+tmp = []
+for i in range(len(data)):
+    if data[i] == "]":
+        if len(tmp):
+            grid.append(tmp)
+        tmp = []
+    elif data[i] in [",", "["]:
+        continue
+    else:
+        tmp.append(int(data[i]))
+
+
+"""
+辗转相除法计算最大公约数
+也可以直接math.gcd(a, b)
+"""
+def gcd(a:int, b:int):
+    while b:
+        a, b = b, a%b
+    return a

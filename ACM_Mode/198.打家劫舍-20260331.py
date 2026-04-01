@@ -32,7 +32,7 @@ class Solution:
 
 # @lc code=end
 import sys
-data = list(map(int, sys.stdin.readline().strip().split())
+data = list(map(int, sys.stdin.readline().strip().split()))
 sol = Solution()
 print(sol.rob(data))
 

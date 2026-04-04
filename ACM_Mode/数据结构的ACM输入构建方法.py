@@ -42,7 +42,7 @@ def print_tree(root: TreeNode):
     while q:
         layer = len(q)
         for _ in range(layer):
-            node = q.pop()
+            node = q.popleft()
             if node:
                 result.append(str(node.val))
                 q.append(node.left)

@@ -2031,3 +2031,7 @@ UI Agent 依赖视觉或 DOM 元素定位。微小变动（如按钮位置、颜
 | UI 脆弱性         | ID、class、XPath、文本、位置、视觉特征均易变                 |
 | 鲁棒性设计        | 假设不确定、快速检测、优雅降级、冗余、保守、快速恢复、持续学习 |
 | 执行控制关键      | 资源、安全、体验、质量、运维的保障，模型到价值的桥梁         |
+
+# Open Claw专题
+
+https://openclaw.cc/reference/session-management-compaction

@@ -9,6 +9,20 @@ import sys
 # data = sys.stdin.readlines()
 # data = [[x.strip().split(",", " ") for x in data]]
 # splitlines是一行输入为一个str，最后汇聚为一个list，元素数量等于行数
-data = sys.stdin.read().strip().splitlines()
+# data = sys.stdin.read().strip().splitlines()
 
-print(data, type(data), len(data))
+# print(data, type(data), len(data))
+# a = [0,1,2,3,4]
+# print(all(a[i] < 5 for i in range(len(a))))
+init_dis = [5,3,6,3,1]
+indices = list(range(len(init_dis)))
+# indices.sort(key = lambda x: x in init_dis)
+# 核心修改：key 应该是索引对应的值
+indices.sort(key = lambda x: init_dis[x])
+print(indices)
+for i in indices:
+    print(init_dis[i], end=",")
+
+    # 一行搞定：带索引排序
+sorted_indices = [i for i, v in sorted(enumerate(init_dis), key=lambda x: x[1])]
+print(sorted_indices)

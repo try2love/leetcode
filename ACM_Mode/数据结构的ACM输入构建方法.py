@@ -1,6 +1,7 @@
 """
 先实现输入一行层序遍历的数据，构建一颗二叉树；以及输入头节点，层序遍历打印这棵二叉树的节点值
 """
+from typing import Optional
 from collections import deque
 class TreeNode():
     def __init__(self, val=0, left=None, right=None):
@@ -93,3 +94,23 @@ def gcd(a:int, b:int):
     while b:
         a, b = b, a%b
     return a
+
+"""
+判断一个链表是否有环：快慢指针
+如果有环，则返回入环点；否则返回None
+"""
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+def detectCycle(head: Optional[ListNode]) -> Optional[ListNode]:
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if fast is slow:
+            while slow is not head:
+                slow = slow.next
+                head = head.next
+            return slow
+    return None

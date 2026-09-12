@@ -3116,3 +3116,672 @@ print(merged)  # {'a': 1, 'b': 2, 'c': 3}
 
 更多详情可参考 [官方文档](https://docs.python.org/3/library/functools.html#functools.reduce)。
 
+## 2026-09-12
+
+### `.index()` 是什么
+
+`.index()` 用于查找某个元素或子串**第一次出现的位置**，返回对应的下标。
+
+Python 中常见支持 `.index()` 的对象包括：
+
+- `list`：查找列表元素
+- `tuple`：查找元组元素
+- `str`：查找字符串中的子串
+
+下标从 `0` 开始。人类习惯从 1 数，程序偏要从 0 开始，双方至今没有和解。
+
+------
+
+### 列表的 `.index()`
+
+基本语法：
+
+```python
+list.index(value)
+```
+
+例如：
+
+```python
+nums = [10, 20, 30, 20]
+
+index = nums.index(20)
+
+print(index)
+```
+
+输出：
+
+```text
+1
+```
+
+虽然列表中有两个 `20`，但 `.index()` 只返回第一个 `20` 的下标：
+
+```text
+下标：  0   1   2   3
+元素： 10  20  30  20
+           ↑
+       第一次出现
+```
+
+------
+
+#### 指定查找起点
+
+语法：
+
+```python
+list.index(value, start)
+```
+
+例如：
+
+```python
+nums = [10, 20, 30, 20]
+
+index = nums.index(20, 2)
+
+print(index)
+```
+
+输出：
+
+```text
+3
+```
+
+因为查找从下标 `2` 开始：
+
+```text
+下标：  0   1   2   3
+元素： 10  20  30  20
+                   ↑
+```
+
+需要注意，返回的仍然是元素在**原列表中的下标**，不是从查找起点重新计算的相对下标。
+
+------
+
+#### 指定查找范围
+
+语法：
+
+```python
+list.index(value, start, end)
+```
+
+查找范围是：
+
+```python
+[start, end)
+```
+
+也就是包含 `start`，但不包含 `end`。
+
+例如：
+
+```python
+nums = [10, 20, 30, 20, 40]
+
+index = nums.index(20, 2, 5)
+
+print(index)
+```
+
+输出：
+
+```text
+3
+```
+
+因为实际查找的是下标：
+
+```text
+2、3、4
+```
+
+即：
+
+```python
+[30, 20, 40]
+```
+
+------
+
+### 找不到元素会发生什么
+
+如果目标元素不存在，`.index()` 不会返回 `-1`，而是抛出 `ValueError`：
+
+```python
+nums = [10, 20, 30]
+
+print(nums.index(100))
+```
+
+报错：
+
+```text
+ValueError: 100 is not in list
+```
+
+因此，不能把 `.index()` 当成“找不到就返回特殊值”的方法。
+
+------
+
+#### 先判断再查找
+
+```python
+nums = [10, 20, 30]
+target = 100
+
+if target in nums:
+    index = nums.index(target)
+    print(index)
+else:
+    print("元素不存在")
+```
+
+这种方式比较直观，但会遍历两次：
+
+1. `target in nums` 查一次；
+2. `nums.index(target)` 再查一次。
+
+数据较小时通常无所谓，毕竟不是每个列表都肩负着拯救世界的性能指标。
+
+------
+
+#### 使用异常处理
+
+```python
+nums = [10, 20, 30]
+target = 100
+
+try:
+    index = nums.index(target)
+    print(index)
+except ValueError:
+    print("元素不存在")
+```
+
+这种方式只执行一次查找。
+
+------
+
+### 元组的 `.index()`
+
+元组和列表的用法基本相同：
+
+```python
+values = ("a", "b", "c", "b")
+
+print(values.index("b"))
+```
+
+输出：
+
+```text
+1
+```
+
+也支持指定查找范围：
+
+```python
+print(values.index("b", 2))
+```
+
+输出：
+
+```text
+3
+```
+
+语法为：
+
+```python
+tuple.index(value)
+tuple.index(value, start)
+tuple.index(value, start, end)
+```
+
+------
+
+### 字符串的 `.index()`
+
+字符串的 `.index()` 用于查找一个子串第一次出现的位置。
+
+语法：
+
+```python
+str.index(substring)
+```
+
+例如：
+
+```python
+text = "hello python"
+
+index = text.index("python")
+
+print(index)
+```
+
+输出：
+
+```text
+6
+```
+
+字符串下标为：
+
+```text
+h e l l o   p y t h o n
+0 1 2 3 4 5 6 7 8 9 10 11
+            ↑
+```
+
+所以 `"python"` 从下标 `6` 开始。
+
+------
+
+#### 查找单个字符
+
+```python
+text = "banana"
+
+print(text.index("a"))
+```
+
+输出：
+
+```text
+1
+```
+
+尽管 `"a"` 出现多次，也只返回第一次出现的位置。
+
+------
+
+#### 查找子串
+
+```python
+text = "abcabc"
+
+print(text.index("abc"))
+```
+
+输出：
+
+```text
+0
+```
+
+从指定位置开始查找：
+
+```python
+print(text.index("abc", 1))
+```
+
+输出：
+
+```text
+3
+```
+
+------
+
+#### 指定字符串查找范围
+
+```python
+text = "hello python world"
+
+print(text.index("o", 5, 15))
+```
+
+查找范围仍然是：
+
+```python
+[5, 15)
+```
+
+返回的是字符在原字符串中的下标。
+
+------
+
+### 字符串 `.index()` 与 `.find()` 的区别
+
+这两个方法都能查找子串，主要区别在于找不到时的行为。
+
+```python
+text = "hello"
+```
+
+使用 `.index()`：
+
+```python
+text.index("x")
+```
+
+结果：
+
+```text
+ValueError: substring not found
+```
+
+使用 `.find()`：
+
+```python
+text.find("x")
+```
+
+结果：
+
+```text
+-1
+```
+
+对比：
+
+| 方法          | 找到时   | 找不到时          |
+| ------------- | -------- | ----------------- |
+| `str.index()` | 返回下标 | 抛出 `ValueError` |
+| `str.find()`  | 返回下标 | 返回 `-1`         |
+
+当“找不到”属于程序异常情况时，可以使用 `.index()`：
+
+```python
+position = text.index("required_keyword")
+```
+
+当“找不到”属于正常情况时，通常使用 `.find()` 更方便：
+
+```python
+position = text.find("keyword")
+
+if position != -1:
+    print("找到了")
+```
+
+需要注意，`.find()` 是字符串方法，列表没有 `.find()`。
+
+------
+
+### 查找所有匹配元素的下标
+
+`.index()` 只会返回第一个匹配项。
+
+例如：
+
+```python
+nums = [1, 2, 1, 3, 1]
+
+print(nums.index(1))
+```
+
+输出：
+
+```text
+0
+```
+
+如果要找出所有 `1` 的下标，可以使用 `enumerate()`：
+
+```python
+nums = [1, 2, 1, 3, 1]
+
+indices = [
+    index
+    for index, value in enumerate(nums)
+    if value == 1
+]
+
+print(indices)
+```
+
+输出：
+
+```text
+[0, 2, 4]
+```
+
+普通循环写法：
+
+```python
+nums = [1, 2, 1, 3, 1]
+indices = []
+
+for index, value in enumerate(nums):
+    if value == 1:
+        indices.append(index)
+
+print(indices)
+```
+
+------
+
+### 查找列表对象时按相等性比较
+
+列表的 `.index()` 使用 `==` 判断元素是否相等。
+
+```python
+items = [
+    [1, 2],
+    [3, 4],
+    [1, 2]
+]
+
+print(items.index([1, 2]))
+```
+
+输出：
+
+```text
+0
+```
+
+虽然传入的 `[1, 2]` 不一定是列表中原来的那个对象，但它们的内容相等，因此能够匹配。
+
+同样：
+
+```python
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        return isinstance(other, User) and self.name == other.name
+```
+
+如果自定义类实现了 `__eq__()`，`.index()` 会按照这个相等规则查找。
+
+------
+
+### 时间复杂度
+
+对于列表和元组，`.index()` 通常需要从前向后依次查找。
+
+最坏时间复杂度是：
+
+$O(n)$
+
+例如目标元素位于最后，或者根本不存在时，需要检查几乎所有元素。
+
+```python
+nums = [1, 2, 3, 4, 5]
+nums.index(5)
+```
+
+需要依次比较：
+
+```text
+1、2、3、4、5
+```
+
+如果需要频繁根据元素查找位置，可以考虑使用字典保存映射：
+
+```python
+nums = [10, 20, 30]
+
+indices = {
+    value: index
+    for index, value in enumerate(nums)
+}
+
+print(indices[20])
+```
+
+输出：
+
+```text
+1
+```
+
+字典查找的平均时间复杂度是：
+
+$O(1)$
+
+不过若列表中有重复元素，简单的字典映射只会保留最后一次出现的位置：
+
+```python
+nums = [10, 20, 10]
+
+indices = {
+    value: index
+    for index, value in enumerate(nums)
+}
+
+print(indices)
+```
+
+输出：
+
+```python
+{
+    10: 2,
+    20: 1
+}
+```
+
+------
+
+### 常见错误
+
+#### 把返回结果当作从 1 开始
+
+```python
+nums = [10, 20, 30]
+
+print(nums.index(10))
+```
+
+输出是：
+
+```text
+0
+```
+
+不是 `1`。
+
+------
+
+#### 认为找不到会返回 `-1`
+
+列表的 `.index()` 找不到会报错：
+
+```python
+nums.index(100)
+```
+
+不会返回：
+
+```text
+-1
+```
+
+只有字符串的 `.find()` 才会在找不到时返回 `-1`。
+
+------
+
+#### 使用 `.index()` 遍历重复元素
+
+下面的写法存在问题：
+
+```python
+nums = [10, 20, 10]
+
+for value in nums:
+    print(nums.index(value))
+```
+
+输出：
+
+```text
+0
+1
+0
+```
+
+第三个元素明明位于下标 `2`，却输出 `0`，因为：
+
+```python
+nums.index(10)
+```
+
+永远返回第一个 `10` 的下标。
+
+正确做法是使用 `enumerate()`：
+
+```python
+for index, value in enumerate(nums):
+    print(index, value)
+```
+
+输出：
+
+```text
+0 10
+1 20
+2 10
+```
+
+------
+
+### 总结
+
+`.index()` 的核心作用是：
+
+```text
+查找目标第一次出现的位置
+```
+
+基本形式：
+
+```python
+sequence.index(target)
+sequence.index(target, start)
+sequence.index(target, start, end)
+```
+
+需要记住三点：
+
+1. 返回第一次出现的下标；
+2. 下标从 `0` 开始；
+3. 找不到时抛出 `ValueError`。
+
+对于列表：
+
+```python
+nums.index(value)
+```
+
+对于字符串：
+
+```python
+text.index(substring)
+```
+
+需要所有匹配位置时，不要反复折腾 `.index()`，直接使用：
+
+```python
+[index for index, value in enumerate(nums) if value == target]
+```
